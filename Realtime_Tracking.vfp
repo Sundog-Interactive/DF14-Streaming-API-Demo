@@ -1,0 +1,150 @@
+<apex:page controller="Realtime_Tracking_Controller" action="{!startPushTopic}">
+    <apex:includeScript value="{!URLFOR($Resource.CometD_Scripts, 'jquery-2.0.3.min.js')}"/>
+	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js"></script>
+    <apex:includeScript value="{!URLFOR($Resource.CometD_Scripts, 'cometd.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD_Scripts, 'json2.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD_Scripts, 'jquery.cometd.js')}"/>
+    <style>
+	  	.ui-autocomplete-loading {
+    		background: white url("http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/smoothness/images/ui-anim_basic_16x16.gif") right center no-repeat;
+  		}
+      	#map_canvas {
+        	width: 900px;
+        	height: 600px;
+		    background-color: #CCC;
+      	}    
+    
+  	</style>
+
+    <script type="text/javascript">
+
+    (function($){
+        $(document).ready(function() {
+            // Connect to the CometD endpoint
+            $.cometd.init({
+            	url: window.location.protocol+'//'+window.location.hostname+'/cometd/29.0/',
+               	requestHeaders: { Authorization: 'OAuth {!$Api.Session_ID}'},
+            	appendMessageTypeToURL : false
+           });
+
+           $.cometd.subscribe('/topic/Realtime_Tracking', function(message) {
+               	console.log('full message:  ' + message);
+               	console.log('message  ' + message.data.sobject.Location__Latitude__s);
+            	var tempUserId = message.data.sobject.User__c;
+            	var lat = message.data.sobject.Location__Latitude__s;
+            	var long = message.data.sobject.Location__Longitude__s;
+               	if(tempUserId == userId && lat != null && long != null){
+                    var d = new Date();
+                    var theTime = d.getHours() + ':' + d.getMinutes();
+                    addMarkerToMap(lat, long, theTime);
+                }
+            });
+        });
+   
+	})(jQuery)
+    
+    var userId = "";
+    var userName = "";
+    var locationJSON;
+    $(function() {
+        function log( message ) {
+          	$("#log").html(message);
+        }
+     
+        $( "#users" ).autocomplete({
+          source: function (request, response) { 
+              Realtime_Tracking_Controller.searchForUser(
+                  request.term,
+                  function(resultList, event){ 
+                      response(resultList);
+                  }
+              );
+          },
+          minLength: 3,
+          select: function( event, ui ) {
+            if(ui.item){
+				log("Tracking " + ui.item.value);                
+                userId = ui.item.id;
+                userName = ui.item.value;
+                getMapData();
+            }
+          }
+        });
+      }); 
+    
+    function getMapData(){
+		Realtime_Tracking_Controller.getLocationData(
+                  	userId,
+                  	function(resultList, event){ 
+                        locationJSON = resultList;
+                        initialize();
+            	   	}
+        );
+    }
+	</script>
+    
+    <apex:pageBlock title="Realtime Tracking">
+    	<apex:pageBlockSection title="Select a User">
+            <div class="ui-widget">
+              <label for="users">User: </label>
+                <input id="users"/>
+            </div>
+             
+            <div style="margin-top:2em; font-family:Arial; font-weight:bold">
+              <div id="log">Search for a User</div>
+            </div>
+            
+		   	<div id="map_canvas"></div><!--Renders Map-->        
+            
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    
+    <script>
+    var map;
+    var markerCount = 0;
+	function initialize() {
+        var myLatlng = new google.maps.LatLng(46.855141, -96.8372664);
+        var map_canvas = document.getElementById('map_canvas');
+        var map_options = {
+          	center: myLatlng,
+          	zoom: 5,
+          	mapTypeId: google.maps.MapTypeId.ROADMAP
+        }
+        map = new google.maps.Map(map_canvas, map_options);
+        
+        setMarkers();
+    }    
+    
+    function setMarkers() {
+        if(locationJSON){
+            $.each(locationJSON, function(i, loc) {
+                console.log('loc:  ' + JSON.stringify(loc));
+                addMarkerToMap(loc.latitude, loc.longitude, loc.checkinTime);
+            });
+        }
+    }    
+    
+    function addMarkerToMap(lat, long, theTime){
+        markerCount++;
+      	var infowindow = new google.maps.InfoWindow();
+        var myLatLng = new google.maps.LatLng(lat, long);
+        var marker = new google.maps.Marker({
+            position: myLatLng,
+            map: map,
+    		animation: google.maps.Animation.DROP,
+        });
+        
+        google.maps.event.addListener(marker, 'click', (function(marker, markerCount) {
+            return function() {
+                infowindow.setContent(theTime);
+                infowindow.open(map, marker);
+            }
+        })(marker, markerCount));  
+		map.panTo(myLatLng)        
+    }
+    
+    google.maps.event.addDomListener(window, 'load', initialize);    
+    </script>
+</apex:page>
