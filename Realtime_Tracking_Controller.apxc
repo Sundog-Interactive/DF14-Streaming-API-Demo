@@ -27,6 +27,12 @@ public class Realtime_Tracking_Controller {
         return locList;
     }
     
+    @RemoteAction
+    public static Boolean insertNewCheckin(Double latitude, Double longitude){
+        insert new Check_In__c(User__c = UserInfo.getUserId(), Location__Latitude__s = latitude, Location__Longitude__s = longitude);
+        return true;
+    }
+    
     public PageReference startPushTopic(){
         List<PushTopic> current = [Select Id, Name From PushTopic Where Name = :REALTIME_TRACKING];
         if (current != null && current.size() == 0) {
