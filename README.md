@@ -11,6 +11,8 @@ DF14-Streaming-API-Demo
 
 The code for the Streaming API Demo that is used at DF14
 
+![](http://www.sundoginteractive.com/images/uploads/channel_images/realtime-tracking.jpg)
+
 <a name="contactus"></a>
 # Contact Us
 
