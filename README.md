@@ -1,8 +1,7 @@
 DF14-Streaming-API-Demo
 ================
 
-# Slides
-  *[here](https://docs.google.com/presentation/d/1IFG4OmQu1PoQDwmQ1Qf01vyyqZMpl5uwMpNcQgTm_dQ/edit?usp=sharing)
+# [Slides](https://docs.google.com/presentation/d/1IFG4OmQu1PoQDwmQ1Qf01vyyqZMpl5uwMpNcQgTm_dQ/edit?usp=sharing)
 
 # Contents
 
